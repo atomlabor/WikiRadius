@@ -1,6 +1,6 @@
 {
   "name": "WikiRadius",
-  "version": "1.2.0",
+  "version": "1.6.0",
   "author": "atomlabor",
   "type": "package",
   "pebble": {
@@ -8,9 +8,16 @@
     "uuid": "4f9a7d3e-b21c-4e89-9d5a-1c8f3b2e4d6a",
     "sdkVersion": "3",
     "enableMultiJS": true,
-    "targetPlatforms": ["basalt", "emery"],
-    "watchapp": { "watchface": false },
-    "capabilities": ["location"],
+    "targetPlatforms": [
+      "basalt",
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "capabilities": [
+      "location"
+    ],
     "resources": {
       "media": [
         {
@@ -32,7 +39,8 @@
       "MESSAGE_KEY_TITLE": 2,
       "MESSAGE_KEY_SNIPPET": 3,
       "MESSAGE_KEY_BEARING": 4,
-      "MESSAGE_KEY_DISTANCE": 5
+      "MESSAGE_KEY_DISTANCE": 5,
+      "MESSAGE_KEY_LOCALE": 6
     }
   }
 }

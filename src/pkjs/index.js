@@ -1,10 +1,12 @@
+var currentLocale = 'en';
+
 function sendStatus(msg) {
   Pebble.sendAppMessage({'MESSAGE_KEY_STATUS': msg});
 }
 
 function fetchWiki(lat, lon) {
-  sendStatus("Wikipedia Suche...");
-  var url = 'https://de.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=' + lat + '|' + lon + '&gsradius=5000&gslimit=1&format=json';
+  sendStatus("Searching Wiki...");
+  var url = 'https://' + currentLocale + '.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=' + lat + '|' + lon + '&gsradius=5000&gslimit=1&format=json';
   
   var req = new XMLHttpRequest();
   req.open('GET', url, true);
@@ -14,16 +16,17 @@ function fetchWiki(lat, lon) {
       if (res.query.geosearch.length > 0) {
         var item = res.query.geosearch[0];
         fetchSnippet(item.pageid, item.title, item.dist);
-      } else { sendStatus("Keine Treffer."); }
+      } else { 
+        sendStatus("No results found."); 
+      }
     }
   };
   req.send(null);
 }
 
 function fetchSnippet(id, title, dist) {
-  sendStatus("Lade Text...");
-  // Wir holen 500 Zeichen für echtes Scroll-Feeling
-  var url = 'https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=500&exintro&explaintext&pageids=' + id + '&format=json';
+  sendStatus("Loading text...");
+  var url = 'https://' + currentLocale + '.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=550&exintro&explaintext&pageids=' + id + '&format=json';
   
   var req = new XMLHttpRequest();
   req.open('GET', url, true);
@@ -36,7 +39,7 @@ function fetchSnippet(id, title, dist) {
         'MESSAGE_KEY_TITLE': title,
         'MESSAGE_KEY_SNIPPET': snippet,
         'MESSAGE_KEY_DISTANCE': Math.round(dist),
-        'MESSAGE_KEY_BEARING': Math.floor(Math.random() * 360)
+        'MESSAGE_KEY_BEARING': Math.floor(Math.random() * 360) 
       });
     }
   };
@@ -45,13 +48,16 @@ function fetchSnippet(id, title, dist) {
 
 Pebble.addEventListener('appmessage', function(e) {
   if (e.payload.MESSAGE_KEY_READY) {
-    sendStatus("GPS Fix...");
+    if (e.payload.MESSAGE_KEY_LOCALE) {
+      currentLocale = e.payload.MESSAGE_KEY_LOCALE.substring(0, 2);
+    }
+    sendStatus("Fixing GPS...");
     navigator.geolocation.getCurrentPosition(
       function(pos) { fetchWiki(pos.coords.latitude, pos.coords.longitude); },
-      function(err) { sendStatus("GPS Fehler."); },
+      function(err) { sendStatus("GPS failed."); },
       { timeout: 15000, enableHighAccuracy: true }
     );
   }
 });
 
-Pebble.addEventListener('ready', function() { console.log("JS Ready"); });
+Pebble.addEventListener('ready', function() {});
