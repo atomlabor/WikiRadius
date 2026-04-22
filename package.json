@@ -9,7 +9,6 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "basalt",
       "emery"
     ],
     "watchapp": {
@@ -20,10 +19,11 @@
     ],
     "messageKeys": {
       "MESSAGE_KEY_READY": 0,
-      "MESSAGE_KEY_TITLE": 1,
-      "MESSAGE_KEY_SNIPPET": 2,
-      "MESSAGE_KEY_BEARING": 3,
-      "MESSAGE_KEY_DISTANCE": 4
+      "MESSAGE_KEY_STATUS": 1,
+      "MESSAGE_KEY_TITLE": 2,
+      "MESSAGE_KEY_SNIPPET": 3,
+      "MESSAGE_KEY_BEARING": 4,
+      "MESSAGE_KEY_DISTANCE": 5
     }
   },
   "dependencies": {}
