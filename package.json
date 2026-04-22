@@ -1,6 +1,6 @@
 {
   "name": "WikiRadius",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "author": "Atomlabor",
   "type": "package",
   "pebble": {
@@ -9,7 +9,8 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "emery"
+      "emery",
+      "basalt"
     ],
     "watchapp": {
       "watchface": false
