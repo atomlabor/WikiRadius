@@ -31,6 +31,7 @@ static char s_title_buf[64] = "WIKIRADIUS";
 static char s_snippet_buf[1024] = "";
 static char s_status_buf[32] = "System Start...";
 static int s_dist = 0, s_bear = 0, s_head = 0;
+static BatteryChargeState s_battery_state;
 
 static void compass_handler(CompassHeadingData data) {
   if (data.compass_status == CompassStatusDataInvalid) return;
@@ -43,6 +44,11 @@ static void compass_handler(CompassHeadingData data) {
   layer_mark_dirty(s_sidebar_layer);
 }
 
+static void battery_handler(BatteryChargeState state) {
+  s_battery_state = state;
+  layer_mark_dirty(s_left_sidebar_layer);
+}
+
 static void left_sidebar_update_proc(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   graphics_context_set_fill_color(ctx, GColorCyan);
@@ -50,11 +56,32 @@ static void left_sidebar_update_proc(Layer *layer, GContext *ctx) {
 
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
-  static char s_time_buf[6];
-  strftime(s_time_buf, sizeof(s_time_buf), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
-
+  static char s_raw_time[6];
+  static char s_vert_time[12];
+  strftime(s_raw_time, sizeof(s_raw_time), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
+  int v_idx = 0;
+  for(int i = 0; i < (int)strlen(s_raw_time); i++) {
+    s_vert_time[v_idx++] = s_raw_time[i];
+    s_vert_time[v_idx++] = '\n';
+  }
+  s_vert_time[v_idx] = '\0';
   graphics_context_set_text_color(ctx, GColorBlack);
-  graphics_draw_text(ctx, s_time_buf, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GRect(0, 5, b.size.w, b.size.h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, s_vert_time, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GRect(0, 5, b.size.w, 100), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+
+  int num_blocks = s_battery_state.charge_percent / 20;
+  if (num_blocks == 0 && s_battery_state.charge_percent > 0) num_blocks = 1;
+  int block_h = 6;
+  int block_w = b.size.w - 8;
+  int start_y = b.size.h - 10;
+  
+  for(int i = 0; i < num_blocks; i++) {
+    GColor b_col = GColorGreen;
+    if(s_battery_state.charge_percent <= 20) b_col = GColorRed;
+    else if(s_battery_state.charge_percent <= 40) b_col = GColorOrange;
+    
+    graphics_context_set_fill_color(ctx, b_col);
+    graphics_fill_rect(ctx, GRect(4, start_y - (i * (block_h + 2)), block_w, block_h), 0, GCornerNone);
+  }
 }
 
 static void sidebar_update_proc(Layer *layer, GContext *ctx) {
@@ -195,6 +222,8 @@ static void prv_init() {
     .unload = prv_main_window_unload
   });
   window_stack_push(s_main_window, true);
+  s_battery_state = battery_state_service_peek();
+  battery_state_service_subscribe(battery_handler);
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   app_message_register_inbox_received(inbox_handler);
   app_message_open(1024, 128);
@@ -203,6 +232,7 @@ static void prv_init() {
 
 static void prv_deinit() {
   compass_service_unsubscribe();
+  battery_state_service_unsubscribe();
   tick_timer_service_unsubscribe();
   app_message_deregister_callbacks();
   window_destroy(s_main_window);
