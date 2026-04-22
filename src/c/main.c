@@ -17,7 +17,7 @@
   #define FONT_S FONT_KEY_GOTHIC_18
 #endif
 
-static Window *s_main_window, *s_splash_window;
+static Window *s_main_window;
 static ScrollLayer *s_scroll_layer;
 static TextLayer *s_title_layer, *s_snippet_layer, *s_status_layer;
 static Layer *s_sidebar_layer;
@@ -81,11 +81,14 @@ static void inbox_handler(DictionaryIterator *iter, void *ctx) {
 
   Tuple *title_t = dict_find(iter, MESSAGE_KEY_TITLE);
   Tuple *snippet_t = dict_find(iter, MESSAGE_KEY_SNIPPET);
-  if(title_t && snippet_t) {
+  Tuple *dist_t = dict_find(iter, MESSAGE_KEY_DISTANCE);
+  Tuple *bear_t = dict_find(iter, MESSAGE_KEY_BEARING);
+  
+  if(title_t && snippet_t && dist_t && bear_t) {
     strncpy(s_title_buf, title_t->value->cstring, sizeof(s_title_buf));
     strncpy(s_snippet_buf, snippet_t->value->cstring, sizeof(s_snippet_buf));
-    s_dist = dict_find(iter, MESSAGE_KEY_DISTANCE)->value->int32;
-    s_bear = dict_find(iter, MESSAGE_KEY_BEARING)->value->int32;
+    s_dist = dist_t->value->int32;
+    s_bear = bear_t->value->int32;
 
     text_layer_set_text(s_title_layer, s_title_buf);
     text_layer_set_text(s_snippet_layer, s_snippet_buf);
@@ -100,10 +103,22 @@ static void inbox_handler(DictionaryIterator *iter, void *ctx) {
   }
 }
 
+static void transition_to_main(void *data) {
+  window_set_background_color(s_main_window, GColorBlack);
+  
+  layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer_splash), true);
+  
+  layer_set_hidden(text_layer_get_layer(s_status_layer), false);
+  layer_set_hidden(s_sidebar_layer, false);
+  
+  request_data_from_js(NULL);
+}
+
 static void prv_main_window_load(Window *window) {
   Layer *w_layer = window_get_root_layer(window);
   GRect b = layer_get_bounds(w_layer);
-  window_set_background_color(window, GColorBlack);
+  
+  window_set_background_color(window, GColorCyan);
 
   s_scroll_layer = scroll_layer_create(GRect(0, 0, b.size.w - SIDEBAR_W, b.size.h));
   scroll_layer_set_click_config_onto_window(s_scroll_layer, window);
@@ -116,7 +131,7 @@ static void prv_main_window_load(Window *window) {
   text_layer_set_text(s_title_layer, s_title_buf);
   scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_title_layer));
 
-  s_snippet_layer = text_layer_create(GRect(4, 45, b.size.w - SIDEBAR_W - 8, 2000));
+  s_snippet_layer = text_layer_create(GRect(4, 45, b.size.w - SIDEBAR_W - 8, 1000));
   text_layer_set_font(s_snippet_layer, fonts_get_system_font(FONT_S));
   text_layer_set_text_color(s_snippet_layer, GColorWhite);
   text_layer_set_background_color(s_snippet_layer, GColorClear);
@@ -126,6 +141,7 @@ static void prv_main_window_load(Window *window) {
   s_status_layer = text_layer_create(GRect(4, 50, b.size.w - SIDEBAR_W - 8, 40));
   text_layer_set_font(s_status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_color(s_status_layer, GColorCyan);
+  text_layer_set_background_color(s_status_layer, GColorClear);
   text_layer_set_text(s_status_layer, s_status_buf);
   layer_add_child(w_layer, text_layer_get_layer(s_status_layer));
 
@@ -134,17 +150,8 @@ static void prv_main_window_load(Window *window) {
   layer_add_child(w_layer, s_sidebar_layer);
 
   layer_set_hidden(scroll_layer_get_layer(s_scroll_layer), true);
-}
-
-static void splash_timer_callback(void *data) {
-  window_stack_push(s_main_window, true);
-  window_stack_remove(s_splash_window, false);
-}
-
-static void prv_splash_window_load(Window *window) {
-  Layer *w_layer = window_get_root_layer(window);
-  GRect b = layer_get_bounds(w_layer);
-  window_set_background_color(window, GColorCyan);
+  layer_set_hidden(text_layer_get_layer(s_status_layer), true);
+  layer_set_hidden(s_sidebar_layer, true);
 
   s_bitmap_splash = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SPLASH);
   s_bitmap_layer_splash = bitmap_layer_create(GRect(b.size.w/2 - 27, b.size.h/2 - 27, 55, 55));
@@ -152,12 +159,17 @@ static void prv_splash_window_load(Window *window) {
   bitmap_layer_set_compositing_mode(s_bitmap_layer_splash, GCompOpSet);
   layer_add_child(w_layer, bitmap_layer_get_layer(s_bitmap_layer_splash));
 
-  app_timer_register(2000, splash_timer_callback, NULL);
+  app_timer_register(2000, transition_to_main, NULL);
 }
 
-static void prv_splash_window_unload(Window *window) {
+static void prv_main_window_unload(Window *window) {
   bitmap_layer_destroy(s_bitmap_layer_splash);
   gbitmap_destroy(s_bitmap_splash);
+  text_layer_destroy(s_title_layer);
+  text_layer_destroy(s_snippet_layer);
+  text_layer_destroy(s_status_layer);
+  layer_destroy(s_sidebar_layer);
+  scroll_layer_destroy(s_scroll_layer);
 }
 
 static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
@@ -172,27 +184,28 @@ static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit,
 }
 
 static void prv_init() {
-  s_splash_window = window_create();
-  window_set_window_handlers(s_splash_window, (WindowHandlers) {
-    .load = prv_splash_window_load,
-    .unload = prv_splash_window_unload
-  });
-  
   s_main_window = window_create();
-  window_set_window_handlers(s_main_window, (WindowHandlers) { .load = prv_main_window_load });
-  
-  window_stack_push(s_splash_window, true);
+  window_set_window_handlers(s_main_window, (WindowHandlers) { 
+    .load = prv_main_window_load,
+    .unload = prv_main_window_unload
+  });
+  window_stack_push(s_main_window, true);
 
   app_glance_reload(prv_update_app_glance, NULL);
 
   app_message_register_inbox_received(inbox_handler);
   app_message_open(1024, 128);
   compass_service_subscribe(compass_handler);
-  
-  app_timer_register(2500, request_data_from_js, NULL);
+}
+
+static void prv_deinit() {
+  compass_service_unsubscribe();
+  app_message_deregister_callbacks();
+  window_destroy(s_main_window);
 }
 
 int main() {
   prv_init();
   app_event_loop();
+  prv_deinit();
 }
