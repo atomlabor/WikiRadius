@@ -17,7 +17,7 @@ function fetchWikipediaData(lat, lon) {
         var pageId = response.query.geosearch[0].pageid;
         var title = response.query.geosearch[0].title;
         var dist = response.query.geosearch[0].dist;
-        var bearing = Math.floor(Math.random() * 360); // Simuliertes Bearing für Navigation
+        var bearing = Math.floor(Math.random() * 360); 
         
         fetchWikipediaSnippet(pageId, title, dist, bearing);
       } else {
@@ -72,7 +72,6 @@ function getGPS() {
   );
 }
 
-// Hört auf das "Go!"-Signal vom C-Code
 Pebble.addEventListener('appmessage', function(e) {
   if (e.payload.MESSAGE_KEY_READY) {
     getGPS();
