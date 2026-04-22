@@ -1,4 +1,4 @@
-# WikiRadius v1.0.0
+# WikiRadius v1.6.0
 
 WikiRadius is a contextual awareness application designed for Pebble smartwatches (specifically optimized for the Emery Pebble Time 2). It enables users to discover historical landmarks, points of interest, and geographical curiosities in their immediate vicinity using the Wikipedia Geosearch API.
 
