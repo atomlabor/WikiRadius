@@ -1,83 +1,58 @@
-// WikiRadius v2.0.0 - High Contrast Edition (PebbleKit JS)
+// WikiRadius v2.0.0 - pkjs/index.js
 
-function sendStatus(message) {
-  Pebble.sendAppMessage({'MESSAGE_KEY_STATUS': message});
+function sendStatus(msg) {
+  Pebble.sendAppMessage({'MESSAGE_KEY_STATUS': msg});
 }
 
-function fetchWikipediaData(lat, lon) {
+function fetchWiki(lat, lon) {
   sendStatus("Wikipedia Suche...");
-  var url = 'https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=' + lat + '|' + lon + '&gsradius=5000&gslimit=1&format=json';
+  var url = 'https://de.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=' + lat + '|' + lon + '&gsradius=5000&gslimit=1&format=json';
   
   var req = new XMLHttpRequest();
   req.open('GET', url, true);
   req.onload = function() {
-    if (req.readyState === 4 && req.status === 200) {
-      var response = JSON.parse(req.responseText);
-      if (response.query.geosearch.length > 0) {
-        var pageId = response.query.geosearch[0].pageid;
-        var title = response.query.geosearch[0].title;
-        var dist = response.query.geosearch[0].dist;
-        var bearing = Math.floor(Math.random() * 360); 
-        
-        fetchWikipediaSnippet(pageId, title, dist, bearing);
-      } else {
-        sendStatus("Nichts in 5km gefunden.");
-      }
-    } else {
-      sendStatus("Wiki API Fehler.");
+    if (req.status === 200) {
+      var res = JSON.parse(req.responseText);
+      if (res.query.geosearch.length > 0) {
+        var item = res.query.geosearch[0];
+        fetchSnippet(item.pageid, item.title, item.dist);
+      } else { sendStatus("Keine Treffer."); }
     }
   };
-  req.onerror = function() { sendStatus("Netzwerkfehler."); };
   req.send(null);
 }
 
-function fetchWikipediaSnippet(pageId, title, dist, bearing) {
-  sendStatus("Lade Artikel...");
-  var url = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=180&exintro&explaintext&pageids=' + pageId + '&format=json';
+function fetchSnippet(id, title, dist) {
+  sendStatus("Lade Text...");
+  var url = 'https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=500&exintro&explaintext&pageids=' + id + '&format=json';
   
   var req = new XMLHttpRequest();
   req.open('GET', url, true);
   req.onload = function() {
-    if (req.readyState === 4 && req.status === 200) {
-      var response = JSON.parse(req.responseText);
-      var snippet = response.query.pages[pageId].extract;
+    if (req.status === 200) {
+      var res = JSON.parse(req.responseText);
+      var snippet = res.query.pages[id].extract;
       
-      var dict = {
+      Pebble.sendAppMessage({
         'MESSAGE_KEY_TITLE': title,
         'MESSAGE_KEY_SNIPPET': snippet,
         'MESSAGE_KEY_DISTANCE': Math.round(dist),
-        'MESSAGE_KEY_BEARING': bearing
-      };
-      
-      Pebble.sendAppMessage(dict, function() {
-        console.log('Daten erfolgreich gesendet!');
-      }, function(e) {
-        console.log('Fehler beim Senden der Daten.');
+        'MESSAGE_KEY_BEARING': Math.floor(Math.random() * 360)
       });
     }
   };
   req.send(null);
 }
 
-function getGPS() {
-  sendStatus("Warte auf GPS-Fix...");
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      fetchWikipediaData(pos.coords.latitude, pos.coords.longitude);
-    },
-    function(err) {
-      sendStatus("GPS fehlgeschlagen.");
-    },
-    { timeout: 15000, maximumAge: 0, enableHighAccuracy: true }
-  );
-}
-
 Pebble.addEventListener('appmessage', function(e) {
   if (e.payload.MESSAGE_KEY_READY) {
-    getGPS();
+    sendStatus("GPS Fix...");
+    navigator.geolocation.getCurrentPosition(
+      function(pos) { fetchWiki(pos.coords.latitude, pos.coords.longitude); },
+      function(err) { sendStatus("GPS Fehler."); },
+      { timeout: 15000, enableHighAccuracy: true }
+    );
   }
 });
 
-Pebble.addEventListener('ready', function(e) {
-  console.log('JS bereit. Warte auf Signal der Uhr.');
-});
+Pebble.addEventListener('ready', function() { console.log("JS Ready"); });
