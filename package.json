@@ -1,0 +1,30 @@
+{
+  "name": "WikiRadius",
+  "version": "2.0.0",
+  "author": "Atomlabor",
+  "type": "package",
+  "pebble": {
+    "displayName": "WikiRadius",
+    "uuid": "4f9a7d3e-b21c-4e89-9d5a-1c8f3b2e4d6a",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "basalt",
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "capabilities": [
+      "location"
+    ],
+    "messageKeys": {
+      "MESSAGE_KEY_READY": 0,
+      "MESSAGE_KEY_TITLE": 1,
+      "MESSAGE_KEY_SNIPPET": 2,
+      "MESSAGE_KEY_BEARING": 3,
+      "MESSAGE_KEY_DISTANCE": 4
+    }
+  },
+  "dependencies": {}
+}
