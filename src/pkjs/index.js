@@ -1,5 +1,3 @@
-// WikiRadius v2.0.0 - pkjs/index.js
-
 function sendStatus(msg) {
   Pebble.sendAppMessage({'MESSAGE_KEY_STATUS': msg});
 }
@@ -24,6 +22,7 @@ function fetchWiki(lat, lon) {
 
 function fetchSnippet(id, title, dist) {
   sendStatus("Lade Text...");
+  // Wir holen 500 Zeichen für echtes Scroll-Feeling
   var url = 'https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=500&exintro&explaintext&pageids=' + id + '&format=json';
   
   var req = new XMLHttpRequest();
