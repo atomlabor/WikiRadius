@@ -21,7 +21,6 @@ static TextLayer *s_title_layer;
 static TextLayer *s_snippet_layer;
 static TextLayer *s_status_layer;
 
-// Daten-State
 static char s_title_buffer[40] = "WIKIRADIUS";
 static char s_snippet_buffer[200] = "";
 static char s_status_buffer[32] = "Initialisiere System...";
@@ -30,9 +29,6 @@ static int s_bearing = 0;
 static int s_filtered_heading = 0;
 static bool s_arrival_vibe_fired = false;
 
-// ---------------------------------------------------------------------------
-// HYBRID NAVIGATION & DRAWING
-// ---------------------------------------------------------------------------
 static void update_navigation() {
   if (s_distance > 0 && s_distance <= ARRIVAL_THRESHOLD && !s_arrival_vibe_fired) {
     vibes_double_pulse(); 
@@ -52,7 +48,6 @@ static void compass_handler(CompassHeadingData heading_data) {
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   
-  // Neon-Sidebar in Magenta (breiter für Emery: 24px)
   graphics_context_set_fill_color(ctx, GColorMagenta);
   graphics_fill_rect(ctx, GRect(bounds.size.w - SIDEBAR_WIDTH, 0, SIDEBAR_WIDTH, bounds.size.h), 0, GCornerNone);
   
@@ -63,14 +58,12 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     
     GPoint center = GPoint(bounds.size.w - (SIDEBAR_WIDTH / 2), center_y_arrow);
     
-    // Greller Pfeil in Yellow
     graphics_context_set_stroke_color(ctx, GColorYellow);
     graphics_context_set_stroke_width(ctx, 4);
     
     GPoint end_pt = gpoint_from_polar(GRect(center.x - 9, center.y - 9, 18, 18), GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(arrow_angle));
     graphics_draw_line(ctx, center, end_pt);
     
-    // Distanz in Weiß
     static char dist_str[8];
     snprintf(dist_str, sizeof(dist_str), "%dm", s_distance);
     graphics_context_set_text_color(ctx, GColorWhite);
@@ -80,9 +73,6 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// APPMESSAGE (JS -> C)
-// ---------------------------------------------------------------------------
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   Tuple *status_t = dict_find(iterator, MESSAGE_KEY_STATUS);
   if(status_t) {
@@ -101,14 +91,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     s_distance = dist_t->value->int32;
     s_bearing = bearing_t->value->int32;
     
-    // Status-Layer verstecken, echten Text anzeigen
     layer_set_hidden(text_layer_get_layer(s_status_layer), true);
     layer_set_hidden(text_layer_get_layer(s_snippet_layer), false);
     
     text_layer_set_text(s_title_layer, s_title_buffer);
     text_layer_set_text(s_snippet_layer, s_snippet_buffer);
     
-    // Speichern für Offline-Nutzung
     persist_write_string(PERSIST_TITLE, s_title_buffer);
     persist_write_string(PERSIST_SNIPPET, s_snippet_buffer);
     persist_write_int(PERSIST_DIST, s_distance);
@@ -118,9 +106,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 }
 
-// ---------------------------------------------------------------------------
-// START TRIGGER
-// ---------------------------------------------------------------------------
 static void request_data_from_js() {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
@@ -130,21 +115,16 @@ static void request_data_from_js() {
   }
 }
 
-// ---------------------------------------------------------------------------
-// WINDOW MANAGEMENT
-// ---------------------------------------------------------------------------
 static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   
-  // Tiefschwarzer Hintergrund für maximalen Kontrast
   window_set_background_color(window, GColorBlack); 
 
   s_canvas_layer = layer_create(bounds);
   layer_set_update_proc(s_canvas_layer, canvas_update_proc);
   layer_add_child(window_layer, s_canvas_layer);
   
-  // Cyberpunk Title Layer (Cyan)
   s_title_layer = text_layer_create(GRect(4, 5, bounds.size.w - SIDEBAR_WIDTH - 8, 32));
   text_layer_set_text_alignment(s_title_layer, GTextAlignmentLeft);
   text_layer_set_font(s_title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
@@ -153,7 +133,6 @@ static void prv_window_load(Window *window) {
   text_layer_set_text(s_title_layer, s_title_buffer);
   layer_add_child(window_layer, text_layer_get_layer(s_title_layer));
   
-  // Status Layer (Weiß, wird beim Laden angezeigt)
   s_status_layer = text_layer_create(GRect(4, 45, bounds.size.w - SIDEBAR_WIDTH - 8, 30));
   text_layer_set_text_alignment(s_status_layer, GTextAlignmentLeft);
   text_layer_set_font(s_status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
@@ -162,7 +141,6 @@ static void prv_window_load(Window *window) {
   text_layer_set_text(s_status_layer, s_status_buffer);
   layer_add_child(window_layer, text_layer_get_layer(s_status_layer));
   
-  // Snippet Layer (Weiß, versteckt bis Daten da sind)
   s_snippet_layer = text_layer_create(GRect(4, 40, bounds.size.w - SIDEBAR_WIDTH - 8, bounds.size.h - 45));
   text_layer_set_text_alignment(s_snippet_layer, GTextAlignmentLeft);
   text_layer_set_font(s_snippet_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
@@ -172,7 +150,6 @@ static void prv_window_load(Window *window) {
   layer_set_hidden(text_layer_get_layer(s_snippet_layer), true);
   layer_add_child(window_layer, text_layer_get_layer(s_snippet_layer));
   
-  // Offline-Daten laden, falls vorhanden
   if (persist_exists(PERSIST_TITLE)) {
     persist_read_string(PERSIST_TITLE, s_title_buffer, sizeof(s_title_buffer));
     persist_read_string(PERSIST_SNIPPET, s_snippet_buffer, sizeof(s_snippet_buffer));
@@ -202,12 +179,10 @@ static void prv_init(void) {
   window_stack_push(s_main_window, true);
   
   app_message_register_inbox_received(inbox_received_callback);
-  app_message_open(512, 512); // Puffer vergrößert für Stabilität
-  
+  app_message_open(512, 512); 
   compass_service_set_heading_filter(DEG_TO_TRIGANGLE(2));
   compass_service_subscribe(compass_handler);
   
-  // Triggere JS aktiv!
   app_timer_register(500, request_data_from_js, NULL);
 }
 
