@@ -126,7 +126,6 @@ static void sidebar_update_proc(Layer *layer, GContext *ctx) {
       d_vert[v_idx++] = '\n';
     }
     d_vert[v_idx] = '\0';
-    
     GSize t_size = graphics_text_layout_get_content_size(d_vert, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GRect(0, 0, b.size.w, 150), GTextOverflowModeWordWrap, GTextAlignmentCenter);
     graphics_context_set_text_color(ctx, GColorBlack);
     graphics_draw_text(ctx, d_vert, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GRect(0, b.size.h - t_size.h - 5, b.size.w, t_size.h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -187,7 +186,7 @@ static void inbox_handler(DictionaryIterator *iter, void *ctx) {
       title_size = text_layer_get_content_size(s_title_layer);
     }
     text_layer_set_size(s_title_layer, GSize(layer_get_bounds(text_layer_get_layer(s_title_layer)).size.w, title_size.h + 5));
-    layer_set_frame(text_layer_get_layer(s_snippet_layer), GRect(0, title_size.h + 10, layer_get_bounds(text_layer_get_layer(s_snippet_layer)).size.w, 2000));
+    layer_set_frame(text_layer_get_layer(s_snippet_layer), GRect(2, title_size.h + 10, layer_get_bounds(scroll_layer_get_layer(s_scroll_layer)).size.w - 4, 2000));
     text_layer_set_text(s_snippet_layer, s_snippet_buf);
     GSize snippet_size = text_layer_get_content_size(s_snippet_layer);
     scroll_layer_set_content_size(s_scroll_layer, GSize(layer_get_bounds(scroll_layer_get_layer(s_scroll_layer)).size.w, title_size.h + snippet_size.h + 80));
@@ -219,14 +218,14 @@ static void prv_main_window_load(Window *window) {
     .click_config_provider = click_config_provider
   });
   layer_add_child(w_layer, scroll_layer_get_layer(s_scroll_layer));
-  s_title_layer = text_layer_create(GRect(0, 5, b.size.w - (2 * SIDEBAR_W), 150));
+  s_title_layer = text_layer_create(GRect(2, 5, b.size.w - (2 * SIDEBAR_W) - 4, 150));
   text_layer_set_font(s_title_layer, fonts_get_system_font(FONT_T_LG));
   text_layer_set_text_color(s_title_layer, GColorMagenta);
   text_layer_set_background_color(s_title_layer, GColorClear);
   text_layer_set_overflow_mode(s_title_layer, GTextOverflowModeWordWrap);
   text_layer_set_text_alignment(s_title_layer, GTextAlignmentCenter);
   scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_title_layer));
-  s_snippet_layer = text_layer_create(GRect(0, 50, b.size.w - (2 * SIDEBAR_W), 2000));
+  s_snippet_layer = text_layer_create(GRect(2, 50, b.size.w - (2 * SIDEBAR_W) - 4, 2000));
   text_layer_set_font(s_snippet_layer, fonts_get_system_font(FONT_S));
   text_layer_set_text_color(s_snippet_layer, GColorWhite);
   text_layer_set_background_color(s_snippet_layer, GColorClear);
