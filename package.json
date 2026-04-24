@@ -1,6 +1,6 @@
 {
   "name": "WikiRadius",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "author": "atomlabor",
   "type": "package",
   "pebble": {
@@ -41,8 +41,7 @@
       "MESSAGE_KEY_SNIPPET":  3,
       "MESSAGE_KEY_BEARING":  4,
       "MESSAGE_KEY_DISTANCE": 5,
-      "MESSAGE_KEY_LOCALE":   6,
-      "MESSAGE_KEY_SAVE":     7
+      "MESSAGE_KEY_LOCALE":   6
     }
   }
 }
