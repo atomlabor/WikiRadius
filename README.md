@@ -1,3 +1,5 @@
+![WikiRadius](https://github.com/atomlabor/WikiRadius/raw/main/WIKIRADIUS.png)
+
 # WikiRadius v3.0.0
 
 Welcome to **WikiRadius**! This is a contextual awareness application crafted for Pebble smartwatches (specifically optimised for the rectangular display of the Emery / Pebble Time 2). It transforms your wrist into a gateway for discovery, uncovering historical landmarks, fascinating points of interest, and geographical curiosities right in your immediate vicinity, powered by the Wikipedia Geosearch API.
@@ -40,7 +42,7 @@ Curious about what else I've been building? You can find my entire collection of
 
 Please note that WikiRadius is a completely independent project. I do not collaborate with, nor is this application affiliated with, endorsed by, or sponsored by Wikipedia or the Wikimedia Foundation. The application solely acts as a client that queries the public Wikipedia Geosearch API to provide geographical data.
 
-## Licence 
+## Licence
 
 This project is proudly open-source under the MIT Licence.
 
